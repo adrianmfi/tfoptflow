@@ -26,7 +26,7 @@ from io import BytesIO
 import matplotlib.pyplot as plt
 import numpy as np
 
-from visualize import plot_img_pairs_w_flows
+from .visualize import plot_img_pairs_w_flows
 
 
 class TBLogger(object):
@@ -60,7 +60,8 @@ class TBLogger(object):
             value: scalar value to log
             step: training iteration
         """
-        summary = tf.Summary(value=[tf.Summary.Value(tag=tag, simple_value=value)])
+        summary = tf.Summary(
+            value=[tf.Summary.Value(tag=tag, simple_value=value)])
         self.writer.add_summary(summary, step)
 
     def log_images(self, tag, images, step, IDs=None):
@@ -84,7 +85,8 @@ class TBLogger(object):
             else:
                 image = images[n]
                 cmap = None
-            plt.imsave(faux_file, image, cmap=cmap, format='png')  # (?, H, W, ?)
+            plt.imsave(faux_file, image, cmap=cmap,
+                       format='png')  # (?, H, W, ?)
             # Create an Image object
             img_sum = tf.Summary.Image(encoded_image_string=faux_file.getvalue(), height=image.shape[0],
                                        width=image.shape[1])
@@ -154,11 +156,15 @@ class OptFlowTBLogger(TBLogger):
         for n in range(len(img_pairs)):
             # Combine image pair, predicted flow, flow pyramid, and groundtruth flow in a single plot
             img_pair = np.expand_dims(img_pairs[n], axis=0)
-            flow_pyr = np.expand_dims(flow_pyrs[n], axis=0) if flow_pyrs is not None else None
-            flow_pred = np.expand_dims(flow_preds[n], axis=0) if flow_preds is not None else None
-            gt_flow = np.expand_dims(flow_gts[n], axis=0) if flow_gts is not None else None
+            flow_pyr = np.expand_dims(
+                flow_pyrs[n], axis=0) if flow_pyrs is not None else None
+            flow_pred = np.expand_dims(
+                flow_preds[n], axis=0) if flow_preds is not None else None
+            gt_flow = np.expand_dims(
+                flow_gts[n], axis=0) if flow_gts is not None else None
 
-            plt = plot_img_pairs_w_flows(img_pair, flow_pyr, num_lvls, flow_pred, gt_flow, None, info)
+            plt = plot_img_pairs_w_flows(
+                img_pair, flow_pyr, num_lvls, flow_pred, gt_flow, None, info)
 
             # Write the image to a string
             faux_file = BytesIO()  # StringIO()
@@ -166,7 +172,8 @@ class OptFlowTBLogger(TBLogger):
             plt.close()
 
             # Create an Image object
-            img_sum = tf.Summary.Image(encoded_image_string=faux_file.getvalue())
+            img_sum = tf.Summary.Image(
+                encoded_image_string=faux_file.getvalue())
 
             # Create a Summary value
             img_tag = tag.format(IDs[n]) if IDs is not None else tag.format(n)

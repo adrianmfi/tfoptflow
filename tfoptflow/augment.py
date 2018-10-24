@@ -19,18 +19,20 @@ import numpy as np
 import cv2
 import random  # so we don't interfere with the use of np.random in the dataset loader
 
-from utils import scale
+from .utils import scale
 
 _DBG_AUG_SET = -1
 
 _DEFAULT_AUG_OPTIONS = {
     'aug_type': 'heavy',  # in ['basic', 'heavy']
-    'aug_labels': True,  # If True, augment both images and labels; otherwise, only augment images
+    # If True, augment both images and labels; otherwise, only augment images
+    'aug_labels': True,
     'fliplr': 0.5,  # Horizontally flip 50% of images
     'flipud': 0.5,  # Vertically flip 50% of images
     # Translate 50% of images by a value between -5 and +5 percent of original size on x- and y-axis independently
     'translate': (0.5, 0.05),
-    'scale': (0.5, 0.05),  # Scale 50% of images by a factor between 95 and 105 percent of original size
+    # Scale 50% of images by a factor between 95 and 105 percent of original size
+    'scale': (0.5, 0.05),
     'random_seed': 1969,
 }
 
@@ -72,8 +74,10 @@ class Augmenter(object):
         aug_images, aug_labels = [], []
         for idx in range(len(images)):
             img_pair = images[idx]
-            assert(len(img_pair[0].shape) == 3 and (img_pair[0].shape[2] == 1 or img_pair[0].shape[2] == 3))
-            assert(len(img_pair[1].shape) == 3 and (img_pair[1].shape[2] == 1 or img_pair[1].shape[2] == 3))
+            assert(len(img_pair[0].shape) == 3 and (
+                img_pair[0].shape[2] == 1 or img_pair[0].shape[2] == 3))
+            assert(len(img_pair[1].shape) == 3 and (
+                img_pair[1].shape[2] == 1 or img_pair[1].shape[2] == 3))
 
             aug_img_pair = [np.copy(img_pair[0]), np.copy(img_pair[1])]
             if do_labels:
@@ -83,7 +87,8 @@ class Augmenter(object):
             if self.opts['fliplr'] > 0.:
                 rand = random.random()
                 if rand < self.opts['fliplr']:
-                    aug_img_pair = [np.fliplr(aug_img_pair[0]), np.fliplr(aug_img_pair[1])]
+                    aug_img_pair = [
+                        np.fliplr(aug_img_pair[0]), np.fliplr(aug_img_pair[1])]
                     if do_labels:
                         aug_flow = np.fliplr(aug_flow)
                         aug_flow[:, :, 0] *= -1
@@ -92,7 +97,8 @@ class Augmenter(object):
             if self.opts['flipud'] > 0.:
                 rand = random.random()
                 if rand < self.opts['flipud']:
-                    aug_img_pair = [np.flipud(aug_img_pair[0]), np.flipud(aug_img_pair[1])]
+                    aug_img_pair = [
+                        np.flipud(aug_img_pair[0]), np.flipud(aug_img_pair[1])]
                     if do_labels:
                         aug_flow = np.flipud(aug_flow)
                         aug_flow[:, :, 1] *= -1
@@ -103,10 +109,14 @@ class Augmenter(object):
                     rand = random.random()
                     if rand < self.opts['translate'][0]:
                         h, w, _ = aug_img_pair[0].shape
-                        tw = int(random.uniform(-self.opts['translate'][1], self.opts['translate'][1]) * w)
-                        th = int(random.uniform(-self.opts['translate'][1], self.opts['translate'][1]) * h)
-                        translation_matrix = np.float32([[1, 0, tw], [0, 1, th]])
-                        aug_img_pair[1] = cv2.warpAffine(aug_img_pair[1], translation_matrix, (w, h))
+                        tw = int(
+                            random.uniform(-self.opts['translate'][1], self.opts['translate'][1]) * w)
+                        th = int(
+                            random.uniform(-self.opts['translate'][1], self.opts['translate'][1]) * h)
+                        translation_matrix = np.float32(
+                            [[1, 0, tw], [0, 1, th]])
+                        aug_img_pair[1] = cv2.warpAffine(
+                            aug_img_pair[1], translation_matrix, (w, h))
                         aug_flow[:, :, 0] += tw
                         aug_flow[:, :, 1] += th
 
@@ -114,7 +124,8 @@ class Augmenter(object):
                 if self.opts['scale'][0] > 0.:
                     rand = random.random()
                     if rand < self.opts['scale'][0]:
-                        ratio = random.uniform(1.0 - self.opts['scale'][1], 1.0 + self.opts['scale'][1])
+                        ratio = random.uniform(
+                            1.0 - self.opts['scale'][1], 1.0 + self.opts['scale'][1])
                         aug_img_pair[0] = scale(aug_img_pair[0], ratio)
                         aug_img_pair[1] = scale(aug_img_pair[1], ratio)
                         if do_labels:

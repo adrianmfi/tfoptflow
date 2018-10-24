@@ -50,6 +50,13 @@ The code in this repo was developed and tested using Anaconda3 v.5.2.0. To repro
 *On Windows:*
 - [`conda list`](tfoptflow/setup/dlwin36.txt) and [`conda env export`](tfoptflow/setup/dlwin36.yml)
 
+# Install
+```console
+git clone https://github.com/adrianmfi/tfoptflow.git
+cd tfoptflow
+pip install .
+```
+
 # Links to pre-trained models <a name="links"></a>
 
 Pre-trained models can be found [here](http://bit.ly/tfoptflow). They come in two flavors: "small" (`sm`, with 4,705,064 learned parameters) models don't use dense connections or residual connections, "large" (`lg`, with 14,079,050 learned parameters) models do. They are all built with a 6-level pyramid, upsampling level 2 by 4 in each dimension to generate the final prediction, and construct an 81-channel cost volume at each level from a search range (maximum displacement) of 4.

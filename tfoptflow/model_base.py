@@ -13,11 +13,11 @@ import numpy as np
 import tensorflow as tf
 import tensorflow.contrib.slim as slim
 
-from ckpt_mgr import BestCheckpointSaver
-from logger import OptFlowTBLogger
-from dataset_base import _DBG_TRAIN_VAL_TEST_SETS
-from lr import lr_multisteps_long, lr_multisteps_fine, lr_cyclic_long, lr_cyclic_fine
-from mixed_precision import float32_variable_storage_getter
+from .ckpt_mgr import BestCheckpointSaver
+from .logger import OptFlowTBLogger
+from .dataset_base import _DBG_TRAIN_VAL_TEST_SETS
+from .lr import lr_multisteps_long, lr_multisteps_fine, lr_cyclic_long, lr_cyclic_fine
+from .mixed_precision import float32_variable_storage_getter
 
 _DEBUG_USE_REF_IMPL = False
 
@@ -37,7 +37,8 @@ class ModelBase:
             # self.graph = tf.Graph()
             # with self.graph.as_default():
         """
-        assert(mode in ['train_noval', 'train_with_val', 'val', 'val_notrain', 'test'])
+        assert(mode in ['train_noval', 'train_with_val',
+                        'val', 'val_notrain', 'test'])
         self.mode, self.sess, self.opts = mode, session, options
         self.y_hat_train_tnsr = self.y_hat_val_tnsr = self.y_hat_test_tnsr = None
         self.name = name
@@ -46,15 +47,20 @@ class ModelBase:
 
         if _DBG_TRAIN_VAL_TEST_SETS != -1:  # Debug mode only
             if self.mode in ['train_noval', 'train_with_val']:
-                self.opts['display_step'] = 10  # show progress every 10 training batches
-                self.opts['snapshot_step'] = 100  # save trained model every 100 training batches
-                self.opts['val_step'] = 100  # Test trained model on validation split every 1000 training batches
+                # show progress every 10 training batches
+                self.opts['display_step'] = 10
+                # save trained model every 100 training batches
+                self.opts['snapshot_step'] = 100
+                # Test trained model on validation split every 1000 training batches
+                self.opts['val_step'] = 100
                 if self.opts['lr_boundaries'] == 'multisteps':
-                    self.opts['lr_boundaries'] = [int(boundary / 1000) for boundary in self.opts['lr_boundaries']]
+                    self.opts['lr_boundaries'] = [
+                        int(boundary / 1000) for boundary in self.opts['lr_boundaries']]
                     self.opts['max_steps'] = self.opts['lr_boundaries'][-1]
                 else:
                     self.opts['cyclic_lr_stepsize'] = 50
-                    self.opts['max_steps'] = 500  # max number of training iterations (i.e., batches to run)
+                    # max number of training iterations (i.e., batches to run)
+                    self.opts['max_steps'] = 500
 
         tf.reset_default_graph()
         self.graph = tf.Graph()
@@ -114,7 +120,8 @@ class ModelBase:
         """Creates a default saver to load/save model checkpoints. Override, if necessary.
         """
         if self.mode in ['train_noval', 'train_with_val']:
-            self.saver = BestCheckpointSaver(self.opts['ckpt_dir'], self.name, self.opts['max_to_keep'], maximize=False)
+            self.saver = BestCheckpointSaver(
+                self.opts['ckpt_dir'], self.name, self.opts['max_to_keep'], maximize=False)
         else:
             self.saver = tf.train.Saver()
 
@@ -148,7 +155,8 @@ class ModelBase:
                 # In fine-tuning mode, we just want to load the trained params from the file and that's it...
                 assert(tf.train.checkpoint_exists(self.opts['ckpt_path']))
                 if self.opts['verbose']:
-                    print(f"Initializing from pre-trained model at {self.opts['ckpt_path']} for finetuning...\n")
+                    print(
+                        f"Initializing from pre-trained model at {self.opts['ckpt_path']} for finetuning...\n")
                 # ...however, the AdamOptimizer also stores variables in the graph, so reinitialize them as well
                 self.sess.run(tf.variables_initializer(self.optim.variables()))
                 # Now initialize the trained params with actual values from the checkpoint
@@ -159,21 +167,25 @@ class ModelBase:
                 self.last_ckpt = self.opts['ckpt_path']
             else:
                 # In training mode, we either want to start a new training session or resume from a previous checkpoint
-                self.last_ckpt = self.saver.best_checkpoint(self.opts['ckpt_dir'], maximize=False)
+                self.last_ckpt = self.saver.best_checkpoint(
+                    self.opts['ckpt_dir'], maximize=False)
                 if self.last_ckpt is None:
-                    self.last_ckpt = tf.train.latest_checkpoint(self.opts['ckpt_dir'])
+                    self.last_ckpt = tf.train.latest_checkpoint(
+                        self.opts['ckpt_dir'])
 
                 if self.last_ckpt:
                     # We're resuming a session -> initialize the graph with the content of the checkpoint
                     if self.opts['verbose']:
-                        print(f"Initializing model from previous checkpoint {self.last_ckpt} to resume training...\n")
+                        print(
+                            f"Initializing model from previous checkpoint {self.last_ckpt} to resume training...\n")
                     self.saver.restore(self.sess, self.last_ckpt)
                     if self.opts['verbose']:
                         print("... model initialized")
                 else:
                     # Initialize all the variables of the graph
                     if self.opts['verbose']:
-                        print(f"Initializing model with random values for initial training...\n")
+                        print(
+                            f"Initializing model with random values for initial training...\n")
                     assert (self.mode in ['train_noval', 'train_with_val'])
                     self.sess.run(tf.global_variables_initializer())
                     if self.opts['verbose']:
@@ -183,7 +195,8 @@ class ModelBase:
             self.last_ckpt = self.opts['ckpt_path']
             assert(self.last_ckpt is not None)
             if self.opts['verbose']:
-                print(f"Loading model checkpoint {self.last_ckpt} for eval or testing...\n")
+                print(
+                    f"Loading model checkpoint {self.last_ckpt} for eval or testing...\n")
             self.saver.restore(self.sess, self.last_ckpt)
             if self.opts['verbose']:
                 print("... model loaded")
@@ -212,8 +225,10 @@ class ModelBase:
         """
         # Increase the batch size with the number of GPUs dedicated to computing TF ops
         batch_size = self.num_gpus * self.opts['batch_size']
-        self.x_tnsr = tf.placeholder(self.opts['x_dtype'], [batch_size] + self.opts['x_shape'], 'x_tnsr')
-        self.y_tnsr = tf.placeholder(self.opts['y_dtype'], [batch_size] + self.opts['y_shape'], 'y_tnsr')
+        self.x_tnsr = tf.placeholder(self.opts['x_dtype'], [
+                                     batch_size] + self.opts['x_shape'], 'x_tnsr')
+        self.y_tnsr = tf.placeholder(self.opts['y_dtype'], [
+                                     batch_size] + self.opts['y_shape'], 'y_tnsr')
 
     def build_graph(self):
         """ Build the complete graph in TensorFlow
@@ -319,17 +334,21 @@ class ModelBase:
             boundaries = self.opts['lr_boundaries']
             values = self.opts['lr_values']
             if self.opts['train_mode'] == 'train':
-                self.lr = lr_multisteps_long(self.g_step_op, boundaries, values)
+                self.lr = lr_multisteps_long(
+                    self.g_step_op, boundaries, values)
             else:
-                self.lr = lr_multisteps_fine(self.g_step_op, boundaries, values)
+                self.lr = lr_multisteps_fine(
+                    self.g_step_op, boundaries, values)
         else:
             lr_base = self.opts['cyclic_lr_base']
             lr_max = self.opts['cyclic_lr_max']
             lr_stepsize = self.opts['cyclic_lr_stepsize']
             if self.opts['train_mode'] == 'train':
-                self.lr = lr_cyclic_long(self.g_step_op, lr_base, lr_max, lr_stepsize)
+                self.lr = lr_cyclic_long(
+                    self.g_step_op, lr_base, lr_max, lr_stepsize)
             else:
-                self.lr = lr_cyclic_fine(self.g_step_op, lr_base, lr_max, lr_stepsize)
+                self.lr = lr_cyclic_fine(
+                    self.g_step_op, lr_base, lr_max, lr_stepsize)
 
     ###
     # Debug utils
@@ -359,4 +378,5 @@ class ModelBase:
             # if self.mode in ['train_noval', 'train_with_val']:
             if self.dbg:
                 self.summary()
-            print(f"  {'trainable params':22} {np.sum([np.prod(v.shape) for v in tf.trainable_variables()])}")
+            print(
+                f"  {'trainable params':22} {np.sum([np.prod(v.shape) for v in tf.trainable_variables()])}")

@@ -52,7 +52,7 @@ import numpy as np
 import cv2
 from skimage.io import imsave
 
-from utils import clean_dst_file
+from .utils import clean_dst_file
 
 
 ##
@@ -204,7 +204,8 @@ def flow_to_img(flow, normalize=True, info=None, flow_mag_max=None):
         https://docs.opencv.org/3.0-beta/doc/py_tutorials/py_video/py_lucas_kanade/py_lucas_kanade.html
     """
     hsv = np.zeros((flow.shape[0], flow.shape[1], 3), dtype=np.uint8)
-    flow_magnitude, flow_angle = cv2.cartToPolar(flow[..., 0].astype(np.float32), flow[..., 1].astype(np.float32))
+    flow_magnitude, flow_angle = cv2.cartToPolar(
+        flow[..., 0].astype(np.float32), flow[..., 1].astype(np.float32))
 
     # A couple times, we've gotten NaNs out of the above...
     nans = np.isnan(flow_magnitude)
@@ -216,7 +217,8 @@ def flow_to_img(flow, normalize=True, info=None, flow_mag_max=None):
     hsv[..., 0] = flow_angle * 180 / np.pi / 2
     if normalize is True:
         if flow_mag_max is None:
-            hsv[..., 1] = cv2.normalize(flow_magnitude, None, 0, 255, cv2.NORM_MINMAX)
+            hsv[..., 1] = cv2.normalize(
+                flow_magnitude, None, 0, 255, cv2.NORM_MINMAX)
         else:
             hsv[..., 1] = flow_magnitude * 255 / flow_mag_max
     else:

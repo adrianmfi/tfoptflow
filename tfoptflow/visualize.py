@@ -11,8 +11,8 @@ Licensed under the MIT License (see LICENSE for details)
 from __future__ import absolute_import, division, print_function
 import matplotlib.pyplot as plt
 
-from utils import clean_dst_file
-from optflow import flow_to_img
+from .utils import clean_dst_file
+from .optflow import flow_to_img
 
 
 def plot_img_pairs_w_flows(
@@ -70,7 +70,8 @@ def plot_img_pairs_w_flows(
         # Plot predicted flow, if any
         if flow_preds is not None:
             plt.subplot(row_count, col_count, plot)
-            title = "predicted flow " + info[row] if info is not None else "predicted flow"
+            title = "predicted flow " + \
+                info[row] if info is not None else "predicted flow"
             plt.title(title, fontsize=fig_width * 2)
             plt.axis('off')
             plt.imshow(flow_to_img(flow_preds[row], flow_mag_max=flow_mag_max))
@@ -90,9 +91,11 @@ def plot_img_pairs_w_flows(
                 plot += jump
             for lvl in range(num_lvls):
                 plt.subplot(row_count, col_count, plot)
-                plt.title(f"level {len(flow_pyrs[row]) - lvl + 1}", fontsize=fig_width * 2)
+                plt.title(
+                    f"level {len(flow_pyrs[row]) - lvl + 1}", fontsize=fig_width * 2)
                 plt.axis('off')
-                plt.imshow(flow_to_img(flow_pyrs[row][lvl], flow_mag_max=flow_mag_max))
+                plt.imshow(flow_to_img(
+                    flow_pyrs[row][lvl], flow_mag_max=flow_mag_max))
                 plot += 1
             if jump < 0:
                 plot -= jump
@@ -117,7 +120,8 @@ def display_img_pairs_w_flows(
         info: optional, stats to display above predicted flow
         flow_mag_max: Max flow to map to 255
     """
-    plt = plot_img_pairs_w_flows(img_pairs, None, 0, flow_preds, flow_gts, titles, info, flow_mag_max)
+    plt = plot_img_pairs_w_flows(
+        img_pairs, None, 0, flow_preds, flow_gts, titles, info, flow_mag_max)
     plt.show()
 
 
@@ -144,7 +148,8 @@ def archive_img_pairs_w_flows(
     clean_dst_file(dst_file)
 
     # Build plot and save it to disk
-    plt = plot_img_pairs_w_flows(img_pairs, None, 0, flow_preds, flow_gts, titles, info, flow_mag_max)
+    plt = plot_img_pairs_w_flows(
+        img_pairs, None, 0, flow_preds, flow_gts, titles, info, flow_mag_max)
     plt.savefig(dst_file, bbox_inches='tight', pad_inches=0.1)
     plt.close()
 
@@ -169,7 +174,8 @@ def display_img_pairs_w_flow_pyrs(
         info: optional, stats to display above predicted flow
         flow_mag_max: Max flow to map to 255
     """
-    plt = plot_img_pairs_w_flows(img_pairs, flow_pyrs, num_lvls, flow_preds, flow_gts, titles, info, flow_mag_max)
+    plt = plot_img_pairs_w_flows(
+        img_pairs, flow_pyrs, num_lvls, flow_preds, flow_gts, titles, info, flow_mag_max)
     plt.show()
 
 
@@ -200,6 +206,7 @@ def archive_img_pairs_w_flow_pyrs(
     clean_dst_file(dst_file)
 
     # Build plot and save it to disk
-    plt = plot_img_pairs_w_flows(img_pairs, flow_pyrs, num_lvls, flow_preds, flow_gts, titles, info, flow_mag_max)
+    plt = plot_img_pairs_w_flows(
+        img_pairs, flow_pyrs, num_lvls, flow_preds, flow_gts, titles, info, flow_mag_max)
     plt.savefig(dst_file, bbox_inches='tight', pad_inches=0.1)
     plt.close()
